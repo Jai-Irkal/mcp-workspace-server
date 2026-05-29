@@ -1,41 +1,50 @@
+import { Injectable } from '@nestjs/common';
 import { MCPTool } from '../interfaces/tool.interface';
-import { CreateTaskSchema } from '../schema/task.schema';
+import { CreateTaskInput, CreateTaskSchema } from '../schema/task.schema';
+import { TaskService } from '../task/task.service';
 
+@Injectable()
 export class CreateTaskTool implements MCPTool {
-  name = 'create_task';
 
-  description = 'Create a workspace task';
+    constructor(
+        private readonly taskService: TaskService,
+    ) { }
+    name = 'create_task';
 
-  inputSchema = {
-    type: 'object',
-    properties: {
-      title: {
-        type: 'string',
-      },
-    },
-    required: ['title'],
-  };
+    description = 'Create a workspace task';
 
-  schema = CreateTaskSchema;
-
-  jsonSchema = {
-    type: 'object',
-    properties: {
-      title: {
-        type: 'string',
-        description: 'Task title',
-      },
-    },
-    required: ['title'],
-  };
-
-  async execute(input: any): Promise<any> {
-    return {
-      success: true,
-      task: {
-        id: Date.now(),
-        title: input.title,
-      },
+    inputSchema = {
+        type: 'object',
+        properties: {
+            title: {
+                type: 'string',
+            },
+        },
+        required: ['title'],
     };
-  }
+
+    schema = CreateTaskSchema;
+
+    jsonSchema = {
+        type: 'object',
+        properties: {
+            title: {
+                type: 'string',
+                description: 'Task title',
+            },
+        },
+        required: ['title'],
+    };
+
+    async execute(input: CreateTaskInput) {
+        const task =
+            this.taskService.createTask(
+                input.title,
+            );
+            
+        return {
+            success: true,
+            task,
+        };
+    }
 }

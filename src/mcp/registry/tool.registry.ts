@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MCPTool } from '../interfaces/tool.interface';
 
+// Registry to manage tools - allows registering, retrieving, and executing tools by name
 @Injectable()
 export class ToolRegistry {
   private tools = new Map<string, MCPTool>();

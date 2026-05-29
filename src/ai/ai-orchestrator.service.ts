@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { GeminiService } from './gemini.service';
 import { McpService } from 'src/mcp/mcp.service';
 
+const MAX_ITERATIONS = 5;
+
 @Injectable()
 export class AIOrchestratorService {
     constructor(
@@ -69,67 +71,111 @@ export class AIOrchestratorService {
     }
 
     async chat(prompt: string) {
-        const ai = this.geminiService.getClient();
+        return this.runAgentLoop(
+            prompt,
+        );
+    }
+
+    private async runAgentLoop(
+        prompt: string,
+    ) {
+        const ai =
+            this.geminiService.getClient();
 
         const toolDefinitions =
             this.buildToolDefinitions();
 
-        const response =
-            await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+        const conversation: any[] = [
+            {
+                role: 'user',
 
-                contents: prompt,
+                parts: [
+                    {
+                        text: prompt,
+                    },
+                ],
+            },
+        ];
 
-                config: {
-                    tools: [
-                        {
-                            functionDeclarations:
-                                toolDefinitions,
-                        },
-                    ],
-                },
+        for (
+            let iteration = 0;
+            iteration < MAX_ITERATIONS;
+            iteration++
+        ) {
+            const response =
+                await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+
+                    contents: conversation,
+
+                    config: {
+                        tools: [
+                            {
+                                functionDeclarations:
+                                    toolDefinitions,
+                            },
+                        ],
+                    },
+                });
+
+            const candidate =
+                response.candidates?.[0];
+
+            const parts =
+                candidate?.content?.parts ||
+                [];
+
+            conversation.push({
+                role: 'model',
+
+                parts,
             });
 
-        const parts =
-            this.extractFunctionCalls(
-                response,
-            );
+            let toolExecuted = false;
 
-        for (const part of parts) {
-            if (part.functionCall) {
-                const toolResult =
-                    await this.executeToolCall(
-                        part.functionCall,
-                    );
+            for (const part of parts) {
+                if (part.functionCall) {
+                    toolExecuted = true;
 
-                const finalResponse =
-                    await this.generateFinalResponse(
-                        prompt,
-                        part.functionCall.name,
-                        toolResult,
-                    );
+                    const toolResult =
+                        await this.executeToolCall(
+                            part.functionCall,
+                        );
 
+                    conversation.push({
+                        role: 'user',
+
+                        parts: [
+                            {
+                                functionResponse: {
+                                    name: part.functionCall.name,
+
+                                    response: toolResult,
+                                },
+                            },
+                        ],
+                    });
+                }
+            }
+
+            if (!toolExecuted) {
                 return {
-                    type: 'AI_RESPONSE',
+                    type: 'AGENT_RESPONSE',
 
-                    tool: part.functionCall.name,
-
-                    args: part.functionCall.args,
-
-                    result: toolResult,
+                    iterations:
+                        iteration + 1,
 
                     response:
-                        finalResponse.text,
+                        response.text,
                 };
             }
         }
 
         return {
-            type: 'TEXT_RESPONSE',
+            type: 'MAX_ITERATIONS_REACHED',
 
-            response:
-                response.text ||
-                'No response generated',
+            message:
+                'Agent stopped after reaching max iterations',
         };
     }
 }

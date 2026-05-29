@@ -1,6 +1,6 @@
 import {
-  Injectable,
-  OnModuleInit,
+    Injectable,
+    OnModuleInit,
 } from '@nestjs/common';
 
 import { ToolRegistry } from './registry/tool.registry';
@@ -11,39 +11,48 @@ import { DeleteTaskTool } from './tools/delete-tasks.tool';
 
 @Injectable()
 export class McpService implements OnModuleInit {
-  constructor(
-    private readonly toolRegistry: ToolRegistry,
-  ) {}
+    constructor(
+        private readonly toolRegistry: ToolRegistry,
 
-  onModuleInit() {
-    this.registerTools();
-  }
+        private readonly createTaskTool: CreateTaskTool,
 
-  private registerTools() {
-    this.toolRegistry.register(
-      new CreateTaskTool(),
-    );
+        private readonly listTasksTool: ListTasksTool,
 
-    this.toolRegistry.register(
-      new ListTasksTool(),
-    );
+        private readonly deleteTaskTool: DeleteTaskTool,
+    ) { }
 
-    this.toolRegistry.register(
-      new DeleteTaskTool(),
-    );
-  }
+    // On module initialization, register all available tools with the tool registry
+    onModuleInit() {
+        this.registerTools();
+    }
 
-  getTools() {
-    return this.toolRegistry.listTools();
-  }
+    private registerTools() {
+        this.toolRegistry.register(
+            this.createTaskTool,
+        );
 
-  async executeTool(
-    name: string,
-    input: any,
-  ) {
-    return this.toolRegistry.executeTool(
-      name,
-      input,
-    );
-  }
+        this.toolRegistry.register(
+            this.listTasksTool,
+        );
+
+        this.toolRegistry.register(
+            this.deleteTaskTool,
+        );
+    }
+
+    // Get a list of all registered tools
+    getTools() {
+        return this.toolRegistry.listTools();
+    }
+
+    // Execute a tool by name with the provided input
+    async executeTool(
+        name: string,
+        input: any,
+    ) {
+        return this.toolRegistry.executeTool(
+            name,
+            input,
+        );
+    }
 }

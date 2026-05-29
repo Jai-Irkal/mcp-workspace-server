@@ -1,7 +1,14 @@
+import { Injectable } from '@nestjs/common';
 import { MCPTool } from '../interfaces/tool.interface';
 import { DeleteTaskSchema } from '../schema/task.schema';
+import { TaskService } from '../task/task.service';
 
+@Injectable()
 export class DeleteTaskTool implements MCPTool {
+
+    constructor(
+        private readonly taskService: TaskService,
+    ) { }
   name = 'delete_task';
 
   description = 'Delete a workspace task';
@@ -32,11 +39,7 @@ export class DeleteTaskTool implements MCPTool {
   async execute(input: any): Promise<any> {
     return {
       success: true,
-      message: `Task with ID ${input.taskId} has been deleted`,
-      task: {
-        id: input.taskId,
-        title: input.title,
-      },
+      message: this.taskService.deleteTask(input.taskId),
     };
   }
 }
