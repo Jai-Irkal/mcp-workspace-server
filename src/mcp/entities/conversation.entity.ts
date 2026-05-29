@@ -1,27 +1,33 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  OneToMany,
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    OneToMany,
 } from 'typeorm';
 
 import { MessageEntity } from './message.entity';
 
 @Entity('conversations')
 export class ConversationEntity {
-  @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn()
     id!: number;
 
-  @Column({
+    @Column({
         unique: true,
     })
     sessionId!: string;
 
-  @CreateDateColumn()
+    @CreateDateColumn()
     createdAt!: Date;
 
-  @OneToMany(
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
+    summary!: string;
+
+    @OneToMany(
         () => MessageEntity,
         (message) => message.conversation
     )

@@ -87,4 +87,48 @@ export class MemoryService {
                 b.createdAt.getTime(),
         );
     }
+
+    async getRecentMessages(
+        sessionId: string,
+        limit = 20,
+    ) {
+        const conversation =
+            await this.conversationRepository.findOne({
+                where: {
+                    sessionId,
+                },
+            });
+
+        if (!conversation) {
+            return [];
+        }
+
+        return (await this.messageRepository.find({
+            where: {
+                conversation: {
+                    id: conversation.id,
+                },
+            },
+
+            order: {
+                createdAt: 'DESC',
+            },
+
+            take: limit,
+        })).reverse();
+    }
+
+    async updateConversationSummary(
+        sessionId: string,
+        summary: string,
+    ) {
+        await this.conversationRepository.update(
+            {
+                sessionId,
+            },
+            {
+                summary,
+            },
+        );
+    }
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { McpController } from './mcp.controller';
 import { McpService } from './mcp.service';
 import { ToolRegistry } from './registry/tool.registry';
@@ -12,14 +12,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConversationEntity } from './entities/conversation.entity';
 import { MessageEntity } from './entities/message.entity';
 import { MemoryService } from './memory/memory.service';
+import { MemoryEmbeddingEntity } from './entities/memory-embedding.entity';
+import { EmbeddingService } from './embedding/embedding.service';
+import { SemanticMemoryService } from './semantic-memory/semantic-memory.service';
+import { AiModule } from 'src/ai/ai.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       TaskEntity,
       ConversationEntity,
-      MessageEntity
+      MessageEntity,
+      MemoryEmbeddingEntity
     ]),
+    forwardRef(() => AiModule)
   ],
   controllers: [McpController],
   providers: [
@@ -30,7 +36,14 @@ import { MemoryService } from './memory/memory.service';
     ListTasksTool,
     DeleteTaskTool,
     MemoryService,
+    EmbeddingService,
+    SemanticMemoryService,
   ],
-  exports: [McpService, ToolRegistry],
+  exports: [
+    McpService, 
+    ToolRegistry,
+    MemoryService,
+    SemanticMemoryService,
+  ],
 })
 export class McpModule { }

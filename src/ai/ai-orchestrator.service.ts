@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { GeminiService } from './gemini.service';
 import { McpService } from 'src/mcp/mcp.service';
 import { MemoryService } from 'src/mcp/memory/memory.service';
+import { SemanticMemoryService } from 'src/mcp/semantic-memory/semantic-memory.service';
 
 const MAX_ITERATIONS = 5;
 
@@ -11,6 +12,7 @@ export class AIOrchestratorService {
         private readonly geminiService: GeminiService,
         private readonly mcpService: McpService,
         private readonly memoryService: MemoryService,
+        private readonly semanticMemoryService: SemanticMemoryService,
     ) { }
 
     private buildToolDefinitions() {
@@ -89,12 +91,62 @@ export class AIOrchestratorService {
         const toolDefinitions =
             this.buildToolDefinitions();
 
+        const relevantMemories =
+            await this.semanticMemoryService.searchRelevantMemories(
+                sessionId,
+                prompt,
+            );
+
+        const conversation: any[] = [
+            {
+                role: 'user',
+
+                parts: [
+                    {
+                        text: `
+You are an enterprise MCP AI assistant.
+
+You can:
+- manage tasks
+- use tools
+- maintain conversational memory
+- reason step-by-step
+
+Always use tools when needed.
+`,
+                    },
+                ],
+            },
+        ];
+
+        conversation.push({
+            role: 'user',
+
+            parts: [
+                {
+                    text: `
+Relevant long-term memories:
+
+${relevantMemories
+                            .map((m) => `- ${m.content}`)
+                            .join('\n')}
+`,
+                },
+            ],
+        });
+
         const history =
-            await this.memoryService.getConversationHistory(
+            await this.memoryService.getRecentMessages(
                 sessionId,
             );
 
-        const conversation: any[] = history.map(
+        if (history.length > 30) {
+            console.log(
+                'Conversation becoming large',
+            );
+        }
+
+        conversation.push(...history.map(
             (message) => ({
                 role: message.role,
 
@@ -104,11 +156,16 @@ export class AIOrchestratorService {
                     },
                 ],
             }),
-        );
+        ));
 
         await this.memoryService.addMessage(
             sessionId,
             'user',
+            prompt,
+        );
+
+        await this.semanticMemoryService.storeMemory(
+            sessionId,
             prompt,
         );
 
