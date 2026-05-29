@@ -9,11 +9,16 @@ import { ListTasksTool } from './tools/list-tasks.tool';
 import { CreateTaskTool } from './tools/create-task.tool';
 import { TaskEntity } from './entities/task.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConversationEntity } from './entities/conversation.entity';
+import { MessageEntity } from './entities/message.entity';
+import { MemoryService } from './memory/memory.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       TaskEntity,
+      ConversationEntity,
+      MessageEntity
     ]),
   ],
   controllers: [McpController],
@@ -24,6 +29,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     CreateTaskTool,
     ListTasksTool,
     DeleteTaskTool,
+    MemoryService,
   ],
   exports: [McpService, ToolRegistry],
 })

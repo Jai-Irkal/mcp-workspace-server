@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GeminiService } from './gemini.service';
 import { McpService } from 'src/mcp/mcp.service';
+import { MemoryService } from 'src/mcp/memory/memory.service';
 
 const MAX_ITERATIONS = 5;
 
@@ -9,6 +10,7 @@ export class AIOrchestratorService {
     constructor(
         private readonly geminiService: GeminiService,
         private readonly mcpService: McpService,
+        private readonly memoryService: MemoryService,
     ) { }
 
     private buildToolDefinitions() {
@@ -70,13 +72,15 @@ export class AIOrchestratorService {
         );
     }
 
-    async chat(prompt: string) {
+    async chat(sessionId: string, prompt: string) {
         return this.runAgentLoop(
+            sessionId,
             prompt,
         );
     }
 
     private async runAgentLoop(
+        sessionId: string,
         prompt: string,
     ) {
         const ai =
@@ -85,17 +89,28 @@ export class AIOrchestratorService {
         const toolDefinitions =
             this.buildToolDefinitions();
 
-        const conversation: any[] = [
-            {
-                role: 'user',
+        const history =
+            await this.memoryService.getConversationHistory(
+                sessionId,
+            );
+
+        const conversation: any[] = history.map(
+            (message) => ({
+                role: message.role,
 
                 parts: [
                     {
-                        text: prompt,
+                        text: message.content,
                     },
                 ],
-            },
-        ];
+            }),
+        );
+
+        await this.memoryService.addMessage(
+            sessionId,
+            'user',
+            prompt,
+        );
 
         for (
             let iteration = 0;
@@ -127,7 +142,6 @@ export class AIOrchestratorService {
 
             conversation.push({
                 role: 'model',
-
                 parts,
             });
 
@@ -159,6 +173,11 @@ export class AIOrchestratorService {
             }
 
             if (!toolExecuted) {
+                await this.memoryService.addMessage(
+                    sessionId,
+                    'model',
+                    response.text || '',
+                );
                 return {
                     type: 'AGENT_RESPONSE',
 

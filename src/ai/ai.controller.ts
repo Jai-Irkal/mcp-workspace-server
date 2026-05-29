@@ -9,7 +9,7 @@ export class AIController {
   ) {}
 
   @Post('chat')
-  async chat(@Body() body: { prompt: string }) {
-    return this.aiOrchestrator.chat(body.prompt);
+  async chat(@Body() body: { sessionId: string, prompt: string }) {
+    return this.aiOrchestrator.chat(body.sessionId, body.prompt);
   }
 }
