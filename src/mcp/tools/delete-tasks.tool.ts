@@ -39,7 +39,7 @@ export class DeleteTaskTool implements MCPTool {
   async execute(input: any): Promise<any> {
     return {
       success: true,
-      message: this.taskService.deleteTask(input.taskId),
+      message: await this.taskService.deleteTask(input.taskId),
     };
   }
 }

@@ -25,7 +25,7 @@ export class ListTasksTool implements MCPTool {
     async execute(): Promise<any> {
         return {
             success: true,
-            tasks: this.taskService.getTasks(),
+            tasks: await this.taskService.getTasks(),
         };
     }
 }

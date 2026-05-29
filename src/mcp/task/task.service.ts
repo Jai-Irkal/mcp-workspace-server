@@ -1,45 +1,46 @@
 import { Injectable } from '@nestjs/common';
 
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { Repository } from 'typeorm';
+
+import { TaskEntity } from '../entities/task.entity';
+
 @Injectable()
 export class TaskService {
-    private tasks = [
-        {
-            id: 1,
-            title: 'Meeting with team',
-        },
-        {
-            id: 2,
-            title: 'Code review',
-        },
-    ];
+  constructor(
+    @InjectRepository(TaskEntity)
+    private readonly taskRepository: Repository<TaskEntity>,
+  ) {}
 
-    getTasks() {
-        return this.tasks;
-    }
+  async getTasks() {
+    return this.taskRepository.find({
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
 
-    createTask(title: string) {
-        const task = {
-            id: Date.now(),
-            title,
-        };
+  async createTask(title: string) {
+    const task =
+      this.taskRepository.create({
+        title,
+      });
 
-        this.tasks.push(task);
+    return this.taskRepository.save(
+      task,
+    );
+  }
 
-        return task;
-    }
+  async deleteTask(taskId: number) {
+    const result =
+      await this.taskRepository.delete(
+        taskId,
+      );
 
-    deleteTask(taskId: number) {
-        const initialLength =
-            this.tasks.length;
-
-        this.tasks = this.tasks.filter(
-            (task) => task.id !== taskId,
-        );
-
-        return {
-            deleted:
-                this.tasks.length !==
-                initialLength,
-        };
-    }
+    return {
+      deleted:
+        result.affected !== 0,
+    };
+  }
 }

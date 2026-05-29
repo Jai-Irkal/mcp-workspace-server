@@ -38,7 +38,7 @@ export class CreateTaskTool implements MCPTool {
 
     async execute(input: CreateTaskInput) {
         const task =
-            this.taskService.createTask(
+            await this.taskService.createTask(
                 input.title,
             );
             

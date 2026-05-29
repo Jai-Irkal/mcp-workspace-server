@@ -7,9 +7,15 @@ import { TaskService } from './task/task.service';
 import { DeleteTaskTool } from './tools/delete-tasks.tool';
 import { ListTasksTool } from './tools/list-tasks.tool';
 import { CreateTaskTool } from './tools/create-task.tool';
+import { TaskEntity } from './entities/task.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [],
+  imports: [
+    TypeOrmModule.forFeature([
+      TaskEntity,
+    ]),
+  ],
   controllers: [McpController],
   providers: [
     McpService,
